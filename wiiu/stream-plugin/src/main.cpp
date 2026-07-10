@@ -25,9 +25,9 @@ WUPS_PLUGIN_VERSION("v0.1.0");
 WUPS_PLUGIN_AUTHOR("Wii-Sec-U contributors");
 WUPS_PLUGIN_LICENSE("GPLv3");
 
+// WUPS_PLUGIN_NAME already pulls in the wut malloc/sockets/newlib/stdcpp/
+// thread hooks; only the devoptab (fs access for the config file) is extra.
 WUPS_USE_WUT_DEVOPTAB();
-WUPS_USE_WUT_MALLOC();
-WUPS_USE_WUT_SOCKETS();
 
 namespace wsu {
 

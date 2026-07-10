@@ -14,6 +14,7 @@
 #include <whb/log_cafe.h>
 #include <whb/log_udp.h>
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
