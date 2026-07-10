@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  pc-linux:
+    name: PC app (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S pc -B pc/build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build pc/build --parallel
+      - name: Test
+        run: ctest --test-dir pc/build --output-on-failure
+
+  pc-windows:
+    name: PC app (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S pc -B pc/build
+      - name: Build
+        run: cmake --build pc/build --config Release --parallel
+      - name: Test
+        run: ctest --test-dir pc/build -C Release --output-on-failure
+
+  wiiu-plugins:
+    name: Wii U plugins (Aroma)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build plugin build image
+        run: docker build -t wsu-wiiu-builder -f wiiu/Dockerfile .
+      - name: Build wsu-input
+        run: >
+          docker run --rm -v "$PWD":/project wsu-wiiu-builder
+          make -C wiiu/input-plugin -j"$(nproc)"
+      - name: Build wsu-stream
+        run: >
+          docker run --rm -v "$PWD":/project wsu-wiiu-builder
+          make -C wiiu/stream-plugin -j"$(nproc)"
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiiu-plugins
+          path: |
+            wiiu/input-plugin/wsu-input.wps
+            wiiu/stream-plugin/wsu-stream.wps

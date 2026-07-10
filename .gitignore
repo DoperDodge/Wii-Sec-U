@@ -1,0 +1,21 @@
+# Build outputs
+build/
+*.o
+*.d
+*.elf
+*.wps
+*.map
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
