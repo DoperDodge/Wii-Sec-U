@@ -94,8 +94,8 @@ class ConfigFile {
                                val[len - 1] == ' ')) {
                 val[--len] = '\0';
             }
-            snprintf(keys_[count_], sizeof(keys_[count_]), "%s", line);
-            snprintf(values_[count_], sizeof(values_[count_]), "%s", val);
+            snprintf(keys_[count_], sizeof(keys_[count_]), "%.31s", line);
+            snprintf(values_[count_], sizeof(values_[count_]), "%.63s", val);
             count_++;
         }
         fclose(f);

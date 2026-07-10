@@ -13,6 +13,7 @@
 #include <coreinit/messagequeue.h>
 #include <gx2/enum.h>
 
+#include <cstdio> // jpeglib.h uses FILE but doesn't include stdio itself
 #include <jpeglib.h>
 
 #include "stream_state.h"
