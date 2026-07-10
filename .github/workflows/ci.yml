@@ -35,8 +35,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
       - name: Build plugin build image
-        run: docker build -t wsu-wiiu-builder -f wiiu/Dockerfile .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: wiiu/Dockerfile
+          tags: wsu-wiiu-builder
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Build wsu-input
         run: >
           docker run --rm -v "$PWD":/project wsu-wiiu-builder
