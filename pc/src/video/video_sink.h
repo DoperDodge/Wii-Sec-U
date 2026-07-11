@@ -19,12 +19,17 @@ class VideoSink {
     // Configuration announced by the stream source (codec, resolution...).
     virtual void onConfig(const WsuConfig &config) = 0;
 
-    // One complete reassembled frame.
+    // One complete reassembled frame. May be called from a receive thread.
     virtual void onFrame(const AssembledFrame &frame) = 0;
 
     // One audio packet (payload as described by the current config).
     virtual void onAudio(const uint8_t *data, size_t len,
                          uint32_t timestampMs) = 0;
+
+    // Called regularly from the app's run loop (always the same thread).
+    // Sinks with a UI use it to create/refresh their window; returning
+    // false asks the app to shut down (user closed the window).
+    virtual bool pump() { return true; }
 };
 
 // Counts frames/bytes; the CLI prints its numbers once per second.

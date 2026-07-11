@@ -41,10 +41,11 @@ is v0.1 scope that has a clear path forward.
 - **No encryption/auth.** The session is open UDP — anyone who can reach
   port 4405 can claim a slot. Fine on LAN/VPN; add a session token before
   exposing it to the raw internet for strangers.
-- **PC display/decode are optional stubs.** The host relays without
-  decoding; rendering needs `WSU_WITH_SDL` plus an MJPEG decoder (FFmpeg
-  integration point is `pc/src/video/`). The headless pipeline — the hard
-  part — is done and tested.
+- **Decode is CPU-side stb_image, not FFmpeg.** The display window
+  (`WSU_WITH_SDL`) decodes MJPEG with the vendored stb_image — ample for
+  428×240 streams, but a future FFmpeg path would cut client CPU and is
+  the prerequisite for host-side NVENC transcode (lower remote
+  bandwidth). Headless builds still relay without decoding.
 - **4th Pro Controller quirk.** Using P4 may require the GamePad to be
   "disabled" in some titles (hid_to_vpad has the same constraint,
   PLAN.md §8.5). Untested until hardware validation.

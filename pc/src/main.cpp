@@ -16,6 +16,7 @@
 #include "sim/console_sim.h"
 #include "util/log.h"
 #include "util/time_util.h"
+#include "video/sdl_display_sink.h"
 
 namespace {
 
@@ -38,6 +39,8 @@ Usage:
     --input synthetic|scripted|sdl|none
                                Local P1 controller source (default: sdl if
                                built with SDL, else synthetic)
+    --display sdl|stats        Show the stream in a window (default: stats;
+                               the host usually sits next to the real TV)
     --console-input-port N     Override console input port (default %u)
     --console-stream-port N    Override console stream port (default %u)
 
@@ -45,6 +48,8 @@ Usage:
     --host IP[:port]           Host address (required; default port %u)
     --name NAME                Player name shown in the lobby
     --input synthetic|scripted|sdl|none
+    --display sdl|stats        Show the stream in a window (default: sdl
+                               when built with SDL, else headless stats)
 
   wsu console-sim [options]    Simulate a Wii U for development
     --input-port N             (default %u)   --stream-port N (default %u)
@@ -96,6 +101,34 @@ std::unique_ptr<wsu::InputBackend> makeInput(const char *choice) {
     return nullptr;
 }
 
+// Builds the video/audio sink for a role. `preferDisplay` selects the
+// default when --display is absent (clients want the picture; the host
+// usually sits next to the real TV). Returns nullptr on a hard error.
+std::shared_ptr<wsu::VideoSink> makeSink(const char *choiceRaw,
+                                         bool preferDisplay,
+                                         const char *title) {
+    using namespace wsu;
+    std::string c = choiceRaw != nullptr ? choiceRaw : "";
+    if (c.empty()) c = preferDisplay ? "sdl-auto" : "stats";
+    if (c == "stats" || c == "none") return std::make_shared<StatsSink>();
+    if (c == "sdl" || c == "sdl-auto") {
+        auto display = makeSdlDisplaySink(title);
+        if (display != nullptr) {
+            return std::shared_ptr<VideoSink>(std::move(display));
+        }
+        if (c == "sdl") {
+            logError("main",
+                     "built without SDL support (-DWSU_WITH_SDL=ON)");
+            return nullptr;
+        }
+        logWarn("main", "no SDL support built in; using headless stats "
+                        "sink (build with -DWSU_WITH_SDL=ON for video)");
+        return std::make_shared<StatsSink>();
+    }
+    logError("main", "unknown display '%s'", c.c_str());
+    return nullptr;
+}
+
 int runHost(int argc, char **argv) {
     using namespace wsu;
     HostOptions opts;
@@ -121,7 +154,9 @@ int runHost(int argc, char **argv) {
     }
 
     auto input = makeInput(argValue(argc, argv, "--input"));
-    auto sink = std::make_shared<StatsSink>();
+    auto sink = makeSink(argValue(argc, argv, "--display"), false,
+                         "Wii-Sec-U host");
+    if (sink == nullptr) return 2;
     HostApp app(opts, std::move(input), sink);
     return app.run(gStop) ? 0 : 1;
 }
@@ -143,7 +178,9 @@ int runClient(int argc, char **argv) {
         opts.playerName = v;
     }
     auto input = makeInput(argValue(argc, argv, "--input"));
-    auto sink = std::make_shared<StatsSink>();
+    auto sink = makeSink(argValue(argc, argv, "--display"), true,
+                         "Wii-Sec-U — remote play");
+    if (sink == nullptr) return 2;
     ClientApp app(opts, std::move(input), sink);
     return app.run(gStop) ? 0 : 1;
 }

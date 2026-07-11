@@ -46,12 +46,17 @@ Phases from [PLAN.md §6](PLAN.md):
 - [x] **Phase 3 groundwork** — remote clients join the host over UDP, claim
   slots P2–P4, receive the relayed stream (port-forward or LAN; no NAT
   traversal yet).
+- [x] **Video display** — build with `-DWSU_WITH_SDL=ON` and the host and
+  every remote client get a window showing the Wii U's picture (MJPEG
+  decoded via vendored stb_image, letterboxed SDL renderer) plus PCM
+  audio playback. Clients default to it; hosts opt in with
+  `--display sdl`.
 - [ ] **On-hardware validation** — the plugins compile against current
   wut/WUPS and follow the proven hooking patterns (hid_to_vpad,
   StreamingPluginWiiU, SwipSwapMe), but have not yet been exercised on a
   real console. Expect iteration here.
-- [ ] SDL controller backend polish, display window, MJPEG decode on PC
-  (FFmpeg), NVENC transcode, NAT traversal, lobby UI, rumble.
+- [ ] FFmpeg/NVENC transcode for lower remote bandwidth, NAT traversal,
+  lobby UI, rumble, connect-callback emulation.
 
 Read [docs/limitations.md](docs/limitations.md) before setting expectations —
 low resolution, real latency, party-game territory (by design; see
@@ -84,11 +89,14 @@ stream, and the sim print the merged P1/P2 controller activity.
    (build them per [docs/building.md](docs/building.md) or grab the CI
    artifacts).
 2. On the host PC: `wsu host --console <wiiu-ip>` (or omit `--console` to
-   discover via LAN broadcast).
-3. Remote players: `wsu client --host <host-ip-or-ddns> --name mario`
-   (the host forwards UDP 4405).
-4. Controllers: build with `-DWSU_WITH_SDL=ON` and use `--input sdl` for
-   real gamepads; `--input scripted` exists for wiring tests.
+   discover via LAN broadcast). Add `--display sdl` if the host wants a
+   window too.
+3. Remote players: `wsu client --host <host-ip-or-ddns> --name mario` —
+   with an SDL build this opens a window showing the Wii U's screen with
+   audio (the host forwards UDP 4405).
+4. Real gamepads and the display window both come from the SDL build:
+   `-DWSU_WITH_SDL=ON`, then `--input sdl`. `--input scripted` and
+   `--display stats` exist for headless wiring tests.
 
 ## Building
 
