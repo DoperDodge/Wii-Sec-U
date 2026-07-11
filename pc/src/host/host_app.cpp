@@ -71,6 +71,13 @@ bool HostApp::run(const std::atomic<bool> &stop) {
     while (!stop.load()) {
         uint32_t now = nowMs();
 
+        // Drive the local display if one is attached; a false return
+        // means the user closed the window.
+        if (localSink_ && !localSink_->pump()) {
+            logInfo(kTag, "display closed, exiting");
+            break;
+        }
+
         // P1 = local controller.
         if (localInput_) {
             WsuInputState state;

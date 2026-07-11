@@ -18,8 +18,11 @@ Options:
 
 | CMake option | Default | Effect |
 |---|---|---|
-| `WSU_WITH_SDL` | `OFF` | Builds the SDL2 game-controller input backend (`--input sdl`). Requires SDL2 dev packages (`libsdl2-dev`, or vcpkg/brew equivalents). |
-| `WSU_BUILD_TESTS` | `ON` | Unit + integration tests. |
+| `WSU_WITH_SDL` | `OFF` | Builds the SDL2 game-controller input backend (`--input sdl`) **and the display window with audio** (`--display sdl`) — you want this ON for actually playing. Requires SDL2 dev packages (`libsdl2-dev` on Ubuntu, `vcpkg install sdl2` on Windows, `brew install sdl2` on macOS). |
+| `WSU_BUILD_TESTS` | `ON` | Unit + integration tests (SDL builds add a headless display test using SDL's dummy drivers). |
+
+MJPEG decoding for the display uses the vendored stb_image
+(`pc/third_party/stb/`) — no FFmpeg or system codec needed.
 
 Windows note: any recent Visual Studio works — `cmake -S pc -B pc/build`
 then `cmake --build pc/build --config Release`. WinSock is linked

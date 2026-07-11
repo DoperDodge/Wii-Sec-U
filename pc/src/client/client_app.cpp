@@ -171,6 +171,13 @@ bool ClientApp::run(const std::atomic<bool> &stop) {
             }
         }
 
+        // Drive the display (window events, latest-frame upload). A false
+        // return means the user closed the window.
+        if (sink_ && !sink_->pump()) {
+            logInfo(kTag, "display closed, exiting");
+            break;
+        }
+
         if (options_.printStats && ageMs(nowMs(), lastStats) >= 1000) {
             const auto *stats = dynamic_cast<const StatsSink *>(sink_.get());
             if (stats != nullptr && connected_.load()) {
