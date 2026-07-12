@@ -8,8 +8,9 @@ is v0.1 scope that has a clear path forward.
 - **Low resolution, software encode.** The Wii U's hardware H.264 encoder
   is not usable from homebrew, so the TV picture is downscaled (428×240
   default, up to ~480p) and JPEG-encoded on a CPU core. Encoding steals
-  CPU from the game — lower `fps`/`quality` in `wsu-stream.cfg` if a game
-  stutters. This is a hard ceiling, not a bug.
+  CPU from the game — lower the frame rate/quality in the plugin's config
+  menu (L + D-Pad Down + SELECT in-game) if a game stutters. This is a
+  hard ceiling, not a bug.
 - **Latency.** Capture (+1 frame by design) + encode + LAN + relay +
   internet + decode adds up. Party/co-op/turn-based games: great.
   Competitive twitch play: no.

@@ -175,9 +175,10 @@ uint32_t kpadInject(KPADChan chan, KPADStatus *data, uint32_t size,
     if (c < 0 || c > 2 || data == nullptr || size == 0) {
         return UINT32_MAX;
     }
+    uint8_t slot = chanToSlot(static_cast<uint32_t>(c));
     WsuInputState s;
-    if (!gRemoteInput.get(chanToSlot(static_cast<uint32_t>(c)), nowMs(),
-                          &s)) {
+    if (!slotInjectionEnabled(slot) ||
+        !gRemoteInput.get(slot, nowMs(), &s)) {
         return UINT32_MAX;
     }
     fillProStatus(&data[0], s, static_cast<uint32_t>(c));
@@ -208,7 +209,8 @@ int32_t my_VPADRead(VPADChan chan, VPADStatus *buffers, uint32_t count,
     }
 
     WsuInputState s;
-    if (!wsu::gRemoteInput.get(0, wsu::nowMs(), &s)) {
+    if (!wsu::slotInjectionEnabled(0) ||
+        !wsu::gRemoteInput.get(0, wsu::nowMs(), &s)) {
         // Remote inactive: track the real hold state so edges are right
         // the moment injection resumes.
         if (result > 0 && realError == VPAD_READ_SUCCESS) {
@@ -303,7 +305,8 @@ DECL_FUNCTION(int32_t, WPADProbe, WPADChan chan,
 int32_t my_WPADProbe(WPADChan chan, WPADExtensionType *outExtensionType) {
     if (chan >= WPAD_CHAN_0 && chan <= WPAD_CHAN_2) {
         WsuInputState s;
-        if (wsu::gRemoteInput.get(wsu::chanToSlot(chan), wsu::nowMs(), &s)) {
+        if (wsu::slotInjectionEnabled(wsu::chanToSlot(chan)) &&
+            wsu::gRemoteInput.get(wsu::chanToSlot(chan), wsu::nowMs(), &s)) {
             if (outExtensionType != nullptr) {
                 *outExtensionType = WPAD_EXT_PRO_CONTROLLER;
             }

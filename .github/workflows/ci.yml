@@ -33,11 +33,13 @@ jobs:
         run: cmake --build pc/build --parallel
       - name: Test (headless SDL via dummy drivers)
         run: ctest --test-dir pc/build --output-on-failure
-      - name: Upload Linux binary
+      - name: Upload Linux binaries
         uses: actions/upload-artifact@v4
         with:
           name: wsu-linux-x64
-          path: pc/build/wsu
+          path: |
+            pc/build/wsu
+            pc/build/wsu-app
 
   pc-windows-package:
     name: PC app (Windows, SDL) + download package
@@ -60,17 +62,18 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path package | Out-Null
+          Copy-Item pc/build/Release/wsu-app.exe package/
           Copy-Item pc/build/Release/wsu.exe package/
           Copy-Item pc/build/Release/*.dll package/
           @"
-          Wii-Sec-U PC app (Windows x64), built with SDL2.
+          Wii-Sec-U PC app (Windows x64)
 
-          This is a command-line program; run it from a terminal:
-            wsu.exe client --host <host-ip> --name yourname --input sdl
-            wsu.exe host --console <wiiu-ip> --input sdl
-            wsu.exe --help
+          wsu-app.exe  — double-click this. Graphical app: host your Wii U
+                         or join a friend, video + audio in the window.
+          wsu.exe      — command-line version for scripting/headless use
+                         (run from a terminal: wsu.exe --help).
 
-          Keep SDL2.dll next to wsu.exe.
+          Keep the .dll files next to the .exe files.
           "@ | Set-Content package/README.txt
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
@@ -120,3 +123,39 @@ jobs:
           path: |
             wiiu/input-plugin/wsu-input.wps
             wiiu/stream-plugin/wsu-stream.wps
+
+  # Every green build of main updates the rolling "latest" release on the
+  # repo's Releases page, so downloads are one click from the front page.
+  publish-latest:
+    name: Publish downloads (Releases page)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [pc-linux-sdl, pc-windows-package, wiiu-plugins]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Package downloads
+        run: |
+          cd artifacts
+          (cd wsu-windows-x64 && zip -r ../wsu-windows-x64.zip .)
+          chmod +x wsu-linux-x64/wsu wsu-linux-x64/wsu-app || true
+          tar -C wsu-linux-x64 -czf wsu-linux-x64.tar.gz .
+          (cd wiiu-plugins && zip -r ../wiiu-plugins.zip .)
+      - name: Update "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest \
+            --title "Wii-Sec-U — latest build" \
+            --notes "Automated build of \`main\` @ ${GITHUB_SHA::7}.
+
+          - **wsu-windows-x64.zip** — unzip, double-click \`wsu-app.exe\` (graphical app; \`wsu.exe\` is the command-line version)
+          - **wsu-linux-x64.tar.gz** — needs \`libsdl2-2.0-0\`; run \`./wsu-app\`
+          - **wiiu-plugins.zip** — copy both \`.wps\` files to \`sd:/wiiu/environments/aroma/plugins/\` (Aroma required); configure in-game via the plugin config menu (L + D-Pad Down + SELECT)" \
+            wsu-windows-x64.zip wsu-linux-x64.tar.gz wiiu-plugins.zip
+        working-directory: artifacts

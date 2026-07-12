@@ -59,4 +59,8 @@ class RemoteInput {
 // Defined in main.cpp; used by injection.cpp.
 extern RemoteInput gRemoteInput;
 
+// True when injection for `slot` is allowed by the config menu (master
+// switch AND the per-player toggle). Defined in main.cpp.
+bool slotInjectionEnabled(uint8_t slot);
+
 } // namespace wsu
