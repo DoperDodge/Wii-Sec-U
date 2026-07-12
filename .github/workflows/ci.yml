@@ -47,9 +47,11 @@ jobs:
       - name: Install SDL2 (vcpkg)
         run: vcpkg install sdl2:x64-windows
       - name: Configure
+        # The -D argument must be quoted so PowerShell expands $env: inside
+        # it (bare -D... tokens are passed literally).
         run: >
           cmake -S pc -B pc/build -DWSU_WITH_SDL=ON
-          -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
       - name: Build
         run: cmake --build pc/build --config Release --parallel
       - name: Test (headless SDL via dummy drivers)
