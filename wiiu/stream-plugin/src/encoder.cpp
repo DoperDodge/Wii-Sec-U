@@ -103,11 +103,14 @@ size_t compress(int w, int h, int quality) {
 }
 
 int encoderThread(int, const char **) {
-    const int outW = gConfig.width;
-    const int outH = gConfig.height;
+    // Buffers sized for the largest resolution preset so the config menu
+    // can switch presets while streaming.
+    constexpr int kMaxOutW = 854;
+    constexpr int kMaxOutH = 480;
 
-    gRgb = new (std::nothrow) uint8_t[static_cast<size_t>(outW) * outH * 3];
-    gJpegCap = static_cast<unsigned long>(outW) * outH * 3;
+    gRgb = new (std::nothrow)
+        uint8_t[static_cast<size_t>(kMaxOutW) * kMaxOutH * 3];
+    gJpegCap = static_cast<unsigned long>(kMaxOutW) * kMaxOutH * 3;
     gJpegBuf = static_cast<unsigned char *>(malloc(gJpegCap));
     if (gRgb == nullptr || gJpegBuf == nullptr) {
         WSU_LOG("stream: encoder buffer alloc failed");
@@ -129,6 +132,12 @@ int encoderThread(int, const char **) {
             captureRelease(index);
             continue;
         }
+
+        // Snapshot the live-tunable settings once per frame.
+        int outW = gConfig.width;
+        int outH = gConfig.height;
+        if (outW < 16 || outW > kMaxOutW) outW = kMaxOutW;
+        if (outH < 16 || outH > kMaxOutH) outH = kMaxOutH;
 
         downscale(*src, outW, outH);
         size_t jpegSize = compress(outW, outH, gConfig.quality);

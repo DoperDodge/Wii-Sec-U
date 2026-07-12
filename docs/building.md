@@ -1,20 +1,22 @@
 # Building
 
-## Prebuilt PC binaries (no toolchain needed)
+## Prebuilt binaries (no toolchain needed)
 
-Every green CI run on `main` uploads ready-to-run packages: repo →
-**Actions** → newest run → **Artifacts**:
+Every green build of `main` updates the **"latest" release on the repo's
+Releases page** (right side of the repo front page — no login needed):
 
-- **`wsu-windows-x64`** — unzip anywhere; contains `wsu.exe` +
-  `SDL2.dll` (keep them together). It's a command-line app: open a
-  terminal in that folder and run `wsu.exe --help`. Windows SmartScreen
-  may warn on first run (unsigned binary) — choose "Run anyway".
-- **`wsu-linux-x64`** — needs the system SDL2 runtime
-  (`sudo apt install libsdl2-2.0-0`), then `chmod +x wsu && ./wsu --help`.
-- **`wiiu-plugins`** — the two `.wps` files for the console.
+- **`wsu-windows-x64.zip`** — unzip anywhere and double-click
+  **`wsu-app.exe`** (the graphical app). `wsu.exe` in the same folder is
+  the command-line version. Keep the `.dll` files next to them. Windows
+  SmartScreen may warn on first run (unsigned binary) — "More info" →
+  "Run anyway".
+- **`wsu-linux-x64.tar.gz`** — needs the system SDL2 runtime
+  (`sudo apt install libsdl2-2.0-0`), then `./wsu-app` (GUI) or `./wsu`
+  (CLI).
+- **`wiiu-plugins.zip`** — the two `.wps` files for the console.
 
-Note: downloading artifacts from the Actions page requires being logged
-in to GitHub.
+Per-branch/PR builds are also available as workflow artifacts on the
+Actions tab (login required there).
 
 ## PC app (`pc/`)
 
@@ -68,12 +70,10 @@ same `make` commands with `DEVKITPRO` set.
 ## Installing on the console
 
 Copy both `.wps` files to `sd:/wiiu/environments/aroma/plugins/` and boot
-Aroma. Optional config files on the SD card:
-
-```
-sd:/wiiu/wsu-input.cfg     # port=4404
-sd:/wiiu/wsu-stream.cfg    # width=428 height=240 fps=20 quality=60 port=4406 audio=1
-```
+Aroma. Settings live in Aroma's plugin config menu — open it in-game with
+**L + D-Pad Down + SELECT**: stream resolution/frame rate/quality and the
+audio toggle under "Wii-Sec-U stream", per-player injection switches under
+"Wii-Sec-U input". Values persist on the SD card via the WUPS storage API.
 
 Both plugins log through the system log and WHB's UDP logger — run
 `udplogserver` from wut's tools on any LAN PC to watch them.

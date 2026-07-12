@@ -60,6 +60,38 @@ endif()
 add_executable(wsu src/main.cpp)
 target_link_libraries(wsu PRIVATE wsu_core)
 
+# Graphical app (Parsec-style launcher + viewer). Requires SDL.
+if(WSU_WITH_SDL)
+    add_library(imgui STATIC
+        third_party/imgui/imgui.cpp
+        third_party/imgui/imgui_draw.cpp
+        third_party/imgui/imgui_tables.cpp
+        third_party/imgui/imgui_widgets.cpp
+        third_party/imgui/backends/imgui_impl_sdl2.cpp
+        third_party/imgui/backends/imgui_impl_sdlrenderer2.cpp
+    )
+    target_include_directories(imgui SYSTEM PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
+    )
+    target_compile_definitions(imgui PUBLIC SDL_MAIN_HANDLED)
+    target_link_libraries(imgui PUBLIC SDL2::SDL2)
+
+    add_executable(wsu-app
+        src/gui/gui_main.cpp
+        src/gui/gui_app.cpp
+        src/gui/gui_video_view.cpp
+    )
+    target_link_libraries(wsu-app PRIVATE wsu_core imgui)
+    if(WIN32)
+        # GUI subsystem (no console window) while keeping main() as entry.
+        set_target_properties(wsu-app PROPERTIES WIN32_EXECUTABLE TRUE)
+        if(MSVC)
+            target_link_options(wsu-app PRIVATE /ENTRY:mainCRTStartup)
+        endif()
+    endif()
+endif()
+
 if(WSU_BUILD_TESTS)
     enable_testing()
     set(WSU_TESTS

@@ -30,7 +30,8 @@ implements it.
 |---|---|---|
 | **wsu-input** plugin | [`wiiu/input-plugin/`](wiiu/input-plugin/) | Aroma (WUPS) plugin: receives up to 4 controllers over UDP and injects them via `VPADRead`/`KPADRead(Ex)`/`WPADProbe` hooks (P1 → GamePad, P2–P4 → Pro Controllers) |
 | **wsu-stream** plugin | [`wiiu/stream-plugin/`](wiiu/stream-plugin/) | Aroma (WUPS) plugin: captures the TV framebuffer on scan-out (GX2 hook), software-encodes MJPEG on a background core, taps TV audio via the AX final-mix callback, streams to the host PC |
-| **wsu** PC app | [`pc/`](pc/) | One binary, three roles: `host` (LAN link to the console + fan-out server + lobby), `client` (remote player), `console-sim` (fake Wii U for development without hardware) |
+| **wsu-app** GUI | [`pc/src/gui/`](pc/src/gui/) | The app you double-click (Parsec-style): host your Wii U or join a friend, connection dashboard, video + audio in the window (SDL2 + Dear ImGui) |
+| **wsu** CLI | [`pc/`](pc/) | Same engine, command-line: `host` (LAN link to the console + fan-out server), `client` (remote player), `console-sim` (fake Wii U for development without hardware) |
 | Shared protocol | [`protocol/wsu_protocol.h`](protocol/wsu_protocol.h) | Endian-safe single-header UDP wire protocol used by all of the above ([spec](docs/protocol.md)) |
 
 ## Status
@@ -51,6 +52,11 @@ Phases from [PLAN.md §6](PLAN.md):
   decoded via vendored stb_image, letterboxed SDL renderer) plus PCM
   audio playback. Clients default to it; hosts opt in with
   `--display sdl`.
+- [x] **Graphical app** — `wsu-app` (Windows/Linux): Parsec-style
+  launcher with Host/Join screens, connection dashboard with player
+  list, stream preview, and full-window remote play. On the console,
+  both plugins expose settings and status through Aroma's plugin config
+  menu (L + D-Pad Down + SELECT) with persistent storage.
 - [ ] **On-hardware validation** — the plugins compile against current
   wut/WUPS and follow the proven hooking patterns (hid_to_vpad,
   StreamingPluginWiiU, SwipSwapMe), but have not yet been exercised on a
@@ -66,10 +72,10 @@ PLAN.md §1).
 
 ### PC app (no console needed)
 
-No toolchain required: download **`wsu-windows-x64`** (or
-`wsu-linux-x64`) from the newest run on the repo's **Actions** tab —
-unzip and run `wsu.exe` from a terminal ([details](docs/building.md)).
-Building from source instead:
+No toolchain required: grab **`wsu-windows-x64.zip`** (or
+`wsu-linux-x64.tar.gz`) from the repo's **Releases** page, unzip, and
+double-click **`wsu-app.exe`** — the graphical app
+([details](docs/building.md)). Building from source instead:
 
 ```sh
 cmake -S pc -B pc/build -DCMAKE_BUILD_TYPE=Release
@@ -93,15 +99,17 @@ stream, and the sim print the merged P1/P2 controller activity.
    `wsu-input.wps` and `wsu-stream.wps` to `sd:/wiiu/environments/aroma/plugins/`
    (build them per [docs/building.md](docs/building.md) or grab the CI
    artifacts).
-2. On the host PC: `wsu host --console <wiiu-ip>` (or omit `--console` to
-   discover via LAN broadcast). Add `--display sdl` if the host wants a
-   window too.
-3. Remote players: `wsu client --host <host-ip-or-ddns> --name mario` —
-   with an SDL build this opens a window showing the Wii U's screen with
-   audio (the host forwards UDP 4405).
-4. Real gamepads and the display window both come from the SDL build:
-   `-DWSU_WITH_SDL=ON`, then `--input sdl`. `--input scripted` and
-   `--display stats` exist for headless wiring tests.
+2. On the host PC: open **wsu-app**, optionally enter the Wii U's IP
+   (blank auto-discovers on the LAN), click **Start hosting**, and
+   forward UDP 4405 on your router. (CLI equivalent:
+   `wsu host --console <wiiu-ip>`.)
+3. Remote players: open **wsu-app**, enter the host's address and a
+   name, click **Join** — the Wii U's screen and audio arrive in the
+   window and their pad becomes P2–P4. (CLI:
+   `wsu client --host <host-ip> --name mario`.)
+4. Console-side settings (stream resolution/fps/quality, per-player
+   toggles) live in Aroma's plugin config menu: press
+   **L + D-Pad Down + SELECT** in-game.
 
 ## Building
 
