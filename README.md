@@ -66,6 +66,11 @@ PLAN.md §1).
 
 ### PC app (no console needed)
 
+No toolchain required: download **`wsu-windows-x64`** (or
+`wsu-linux-x64`) from the newest run on the repo's **Actions** tab —
+unzip and run `wsu.exe` from a terminal ([details](docs/building.md)).
+Building from source instead:
+
 ```sh
 cmake -S pc -B pc/build -DCMAKE_BUILD_TYPE=Release
 cmake --build pc/build --parallel

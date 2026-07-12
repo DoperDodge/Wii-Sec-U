@@ -1,5 +1,21 @@
 # Building
 
+## Prebuilt PC binaries (no toolchain needed)
+
+Every green CI run on `main` uploads ready-to-run packages: repo →
+**Actions** → newest run → **Artifacts**:
+
+- **`wsu-windows-x64`** — unzip anywhere; contains `wsu.exe` +
+  `SDL2.dll` (keep them together). It's a command-line app: open a
+  terminal in that folder and run `wsu.exe --help`. Windows SmartScreen
+  may warn on first run (unsigned binary) — choose "Run anyway".
+- **`wsu-linux-x64`** — needs the system SDL2 runtime
+  (`sudo apt install libsdl2-2.0-0`), then `chmod +x wsu && ./wsu --help`.
+- **`wiiu-plugins`** — the two `.wps` files for the console.
+
+Note: downloading artifacts from the Actions page requires being logged
+in to GitHub.
+
 ## PC app (`pc/`)
 
 Requirements: CMake ≥ 3.16 and a C++17 compiler (GCC/Clang/MSVC). The
