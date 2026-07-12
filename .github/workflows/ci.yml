@@ -33,6 +33,50 @@ jobs:
         run: cmake --build pc/build --parallel
       - name: Test (headless SDL via dummy drivers)
         run: ctest --test-dir pc/build --output-on-failure
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: wsu-linux-x64
+          path: pc/build/wsu
+
+  pc-windows-package:
+    name: PC app (Windows, SDL) + download package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDL2 (vcpkg)
+        run: vcpkg install sdl2:x64-windows
+      - name: Configure
+        # The -D argument must be quoted so PowerShell expands $env: inside
+        # it (bare -D... tokens are passed literally).
+        run: >
+          cmake -S pc -B pc/build -DWSU_WITH_SDL=ON
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Build
+        run: cmake --build pc/build --config Release --parallel
+      - name: Test (headless SDL via dummy drivers)
+        run: ctest --test-dir pc/build -C Release --output-on-failure
+      - name: Stage package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path package | Out-Null
+          Copy-Item pc/build/Release/wsu.exe package/
+          Copy-Item pc/build/Release/*.dll package/
+          @"
+          Wii-Sec-U PC app (Windows x64), built with SDL2.
+
+          This is a command-line program; run it from a terminal:
+            wsu.exe client --host <host-ip> --name yourname --input sdl
+            wsu.exe host --console <wiiu-ip> --input sdl
+            wsu.exe --help
+
+          Keep SDL2.dll next to wsu.exe.
+          "@ | Set-Content package/README.txt
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: wsu-windows-x64
+          path: package/
 
   pc-windows:
     name: PC app (Windows)
