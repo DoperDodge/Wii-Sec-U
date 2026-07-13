@@ -101,6 +101,10 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build plugin build image
         uses: docker/build-push-action@v6
+        env:
+          # Don't upload the build-summary (.dockerbuild) artifact; it isn't
+          # a deliverable and its download flakes in the publish job.
+          DOCKER_BUILD_SUMMARY: "false"
         with:
           context: .
           file: wiiu/Dockerfile
@@ -135,8 +139,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      # Download only the artifacts we ship. Downloading *all* artifacts
+      # also pulls the auto-generated docker build-summary blob, whose
+      # download intermittently fails and would fail this whole job.
       - uses: actions/download-artifact@v4
         with:
+          pattern: "{wsu-windows-x64,wsu-linux-x64,wiiu-plugins}"
           path: artifacts
       - name: Package downloads
         run: |

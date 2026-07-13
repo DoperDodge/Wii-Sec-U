@@ -200,8 +200,12 @@ void GuiApp::drawUi() {
 void GuiApp::drawHome() {
     const float cardWidth = 460.0f;
     ImVec2 avail = ImGui::GetContentRegionAvail();
-    ImGui::SetCursorPosX((avail.x - cardWidth) * 0.5f);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 30.0f);
+    // Top margin as a real item (Dummy), and horizontal centering by
+    // indenting to the card's left edge — neither extends the parent
+    // boundary the way a trailing SetCursorPos would.
+    ImGui::Dummy(ImVec2(1.0f, 30.0f));
+    float indent = (avail.x - cardWidth) * 0.5f;
+    if (indent > 0.0f) ImGui::SetCursorPosX(indent);
 
     ImGui::BeginChild("card", ImVec2(cardWidth, 0),
                       ImGuiChildFlags_AutoResizeY,
@@ -258,29 +262,35 @@ void GuiApp::drawVideoRegion(float reservedBottom) {
     avail.y -= reservedBottom;
     if (avail.x < 32 || avail.y < 32) return;
 
-    if (texture == nullptr) {
-        ImVec2 pos = ImGui::GetCursorPos();
-        ImGui::SetCursorPos(
-            ImVec2(pos.x + avail.x * 0.5f - 60, pos.y + avail.y * 0.5f));
-        ImGui::TextDisabled("Waiting for video...");
-        ImGui::SetCursorPos(ImVec2(pos.x, pos.y + avail.y));
-        return;
-    }
+    // A child window contains the centered content so cursor positioning
+    // stays inside its own boundaries — the child is submitted as a single
+    // item to the parent, which keeps ImGui's boundary tracking happy.
+    ImGui::BeginChild("##video", avail, ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar);
+    ImVec2 region = ImGui::GetContentRegionAvail();
 
-    float texW = static_cast<float>(view_->frameWidth());
-    float texH = static_cast<float>(view_->frameHeight());
-    float scale = texW > 0 && texH > 0
-                      ? (avail.x / texW < avail.y / texH ? avail.x / texW
-                                                         : avail.y / texH)
-                      : 1.0f;
-    ImVec2 size(texW * scale, texH * scale);
-    ImVec2 pos = ImGui::GetCursorPos();
-    ImGui::SetCursorPos(ImVec2(pos.x + (avail.x - size.x) * 0.5f,
-                               pos.y + (avail.y - size.y) * 0.5f));
-    ImGui::Image(static_cast<ImTextureID>(
-                     reinterpret_cast<uintptr_t>(texture)),
-                 size);
-    ImGui::SetCursorPos(ImVec2(pos.x, pos.y + avail.y));
+    if (texture == nullptr) {
+        const char *msg = "Waiting for video...";
+        ImVec2 textSize = ImGui::CalcTextSize(msg);
+        ImGui::SetCursorPos(ImVec2((region.x - textSize.x) * 0.5f,
+                                   (region.y - textSize.y) * 0.5f));
+        ImGui::TextDisabled("%s", msg);
+    } else {
+        float texW = static_cast<float>(view_->frameWidth());
+        float texH = static_cast<float>(view_->frameHeight());
+        float scale =
+            texW > 0 && texH > 0
+                ? (region.x / texW < region.y / texH ? region.x / texW
+                                                      : region.y / texH)
+                : 1.0f;
+        ImVec2 size(texW * scale, texH * scale);
+        ImGui::SetCursorPos(ImVec2((region.x - size.x) * 0.5f,
+                                   (region.y - size.y) * 0.5f));
+        ImGui::Image(static_cast<ImTextureID>(
+                         reinterpret_cast<uintptr_t>(texture)),
+                     size);
+    }
+    ImGui::EndChild();
 }
 
 void GuiApp::drawHosting() {
